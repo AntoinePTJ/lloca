@@ -237,11 +237,12 @@ class BaselineTransformerBlock(nn.Module):
         multi_query: bool = True,
         mlp_factor: int = 4,
         dropout_prob=None,
+        norm_elementwise_affine: bool = False,
     ) -> None:
         super().__init__()
 
-        self.norm1 = BaselineLayerNorm()
-        self.norm2 = BaselineLayerNorm()
+        self.norm1 = nn.LayerNorm(normalized_shape=hidden_channels, elementwise_affine=norm_elementwise_affine)
+        self.norm2 = nn.LayerNorm(normalized_shape=hidden_channels, elementwise_affine=norm_elementwise_affine)
 
         hidden_channels_attn = hidden_channels * attention_factor
 
@@ -340,6 +341,8 @@ class Transformer(nn.Module):
         mlp_factor: int = 4,
         multi_query: bool = False,
         dropout_prob: float | None = None,
+        norm_elementwise_affine: bool = False,
+        last_layer_norm: bool = False,
         compile: bool = False,
         compile_mode: str = "default",
         compile_dynamic: bool = True,
@@ -361,10 +364,14 @@ class Transformer(nn.Module):
                     mlp_factor=mlp_factor,
                     multi_query=multi_query,
                     dropout_prob=dropout_prob,
+                    norm_elementwise_affine=norm_elementwise_affine,
                 )
                 for _ in range(num_blocks)
             ]
         )
+        self.last_layer_norm = last_layer_norm
+        if last_layer_norm:
+            self.norm = nn.LayerNorm(normalized_shape=self.hidden_channels, elementwise_affine=norm_elementwise_affine)
         self.linear_out = nn.Linear(self.hidden_channels, out_channels)
 
         if compile:
@@ -399,5 +406,7 @@ class Transformer(nn.Module):
                 h = checkpoint(block, h, use_reentrant=False, **attn_kwargs)
             else:
                 h = block(h, **attn_kwargs)
+        if self.last_layer_norm:
+            h = self.norm(h)
         outputs = self.linear_out(h)
         return outputs

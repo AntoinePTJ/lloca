@@ -162,10 +162,11 @@ class BaselineTransformerBlock(nn.Module):
         attention_factor: int = 1,
         mlp_factor: int = 2,
         dropout_prob=None,
+        norm_elementwise_affine: bool = False,
     ) -> None:
         super().__init__()
 
-        self.norm = nn.RMSNorm(normalized_shape=hidden_channels, elementwise_affine=False)
+        self.norm = nn.RMSNorm(normalized_shape=hidden_channels, elementwise_affine=norm_elementwise_affine)
 
         hidden_channels_attn = hidden_channels * attention_factor
 
@@ -264,6 +265,7 @@ class Transformer(nn.Module):
         attention_factor: int = 1,
         mlp_factor: int = 2,
         dropout_prob: float | None = None,
+        norm_elementwise_affine: bool = True,
         compile: bool = False,
         compile_mode: str = "default",
         compile_dynamic: bool = True,
@@ -284,10 +286,12 @@ class Transformer(nn.Module):
                     attention_factor=attention_factor,
                     mlp_factor=mlp_factor,
                     dropout_prob=dropout_prob,
+                    norm_elementwise_affine=norm_elementwise_affine,
                 )
                 for _ in range(num_blocks)
             ]
         )
+        self.norm = nn.RMSNorm(normalized_shape=self.hidden_channels, elementwise_affine=norm_elementwise_affine)
         self.linear_out = nn.Linear(self.hidden_channels, out_channels)
 
         if compile:
@@ -323,5 +327,6 @@ class Transformer(nn.Module):
                 h = checkpoint(fn, h, use_reentrant=False)
             else:
                 h = block(h, **attn_kwargs)
+        h = self.norm(h)
         outputs = self.linear_out(h)
         return outputs
