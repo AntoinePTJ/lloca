@@ -166,7 +166,9 @@ class BaselineTransformerBlock(nn.Module):
     ) -> None:
         super().__init__()
 
-        self.norm = nn.RMSNorm(normalized_shape=hidden_channels, elementwise_affine=norm_elementwise_affine)
+        self.norm = nn.RMSNorm(
+            normalized_shape=hidden_channels, elementwise_affine=norm_elementwise_affine
+        )
 
         hidden_channels_attn = hidden_channels * attention_factor
 
@@ -291,7 +293,9 @@ class Transformer(nn.Module):
                 for _ in range(num_blocks)
             ]
         )
-        self.norm = nn.RMSNorm(normalized_shape=self.hidden_channels, elementwise_affine=norm_elementwise_affine)
+        self.norm = nn.RMSNorm(
+            normalized_shape=self.hidden_channels, elementwise_affine=norm_elementwise_affine
+        )
         self.linear_out = nn.Linear(self.hidden_channels, out_channels)
 
         if compile:

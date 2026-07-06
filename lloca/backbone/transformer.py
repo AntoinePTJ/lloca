@@ -241,8 +241,12 @@ class BaselineTransformerBlock(nn.Module):
     ) -> None:
         super().__init__()
 
-        self.norm1 = nn.LayerNorm(normalized_shape=hidden_channels, elementwise_affine=norm_elementwise_affine)
-        self.norm2 = nn.LayerNorm(normalized_shape=hidden_channels, elementwise_affine=norm_elementwise_affine)
+        self.norm1 = nn.LayerNorm(
+            normalized_shape=hidden_channels, elementwise_affine=norm_elementwise_affine
+        )
+        self.norm2 = nn.LayerNorm(
+            normalized_shape=hidden_channels, elementwise_affine=norm_elementwise_affine
+        )
 
         hidden_channels_attn = hidden_channels * attention_factor
 
@@ -371,7 +375,9 @@ class Transformer(nn.Module):
         )
         self.last_layer_norm = last_layer_norm
         if last_layer_norm:
-            self.norm = nn.LayerNorm(normalized_shape=self.hidden_channels, elementwise_affine=norm_elementwise_affine)
+            self.norm = nn.LayerNorm(
+                normalized_shape=self.hidden_channels, elementwise_affine=norm_elementwise_affine
+            )
         self.linear_out = nn.Linear(self.hidden_channels, out_channels)
 
         if compile:
